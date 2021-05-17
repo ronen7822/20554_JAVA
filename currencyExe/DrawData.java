@@ -28,8 +28,8 @@ public class DrawData extends JPanel implements  ActionListener {
 		ratio = new JTextField("type the ratio",8); 
 		response = new JLabel();
 
-		currencyOptions= new JComboBox<String>(ExchangeRate.getCurrencies());
-		currencyOptions2= new JComboBox<String>(ExchangeRate.getCurrencies());
+		currencyOptions= new JComboBox<String>(DataBase.getCurrencies());
+		currencyOptions2= new JComboBox<String>(DataBase.getCurrencies());
 			
 		JPanel controls = new JPanel();	 // adding all the buttons and the labels to the north panel
 		controls.add(from);
@@ -73,17 +73,17 @@ public class DrawData extends JPanel implements  ActionListener {
        			// try to convert the text into double if fails prints error to the user
        			Double ratio =  Double.parseDouble(ratioText);
        			// if the new currency is not in the data base
-           		if (! ExchangeRate.existInTable(newCurrency)) {
+           		if (! DataBase.currencyExistInTable(newCurrency)) {
            			// the ratio relative to the shekel
-           			ratio = ratio * ExchangeRate.rate(1, (String) currencyOptions.getSelectedItem(), "ILS");
+           			ratio = ratio * DataBase.rate(1, (String) currencyOptions.getSelectedItem(), "ILS");
            		
-           			ExchangeRate.addCurrency(newCurrency, ratio);
+           			DataBase.addCurrency(newCurrency, ratio);
            			response.setText("the currency: " + newCurrency+ " was added sucsessfully" ); 
            			// repaint the options
            			this.updateOptions();
            		}
            		else 
-           			response.setText("the currency: " + newCurrency+ " is alreay in the data base" ); 
+           			response.setText("the currency: " + newCurrency+ " is alreay in the data base" );  
        		}
        		catch (NumberFormatException ex) {  	
     			response.setText("Given String is not parsable to double" ); 
@@ -92,15 +92,20 @@ public class DrawData extends JPanel implements  ActionListener {
         // button clicked was "remove"
        	else if (e.getSource() == remove){       		
        		String currencyToRemove = (String)currencyOptions.getSelectedItem();
+       		 
+       		if (currencyToRemove.equals("ILS")) {    			
+       			response.setText("Can not remove ILS" );
+       			return;
+       		}
        		// remove the currency from the the data base
-       		ExchangeRate.removeCurrency( currencyToRemove );
+       		DataBase.removeCurrency( currencyToRemove );
        		response.setText("the currency: " + currencyToRemove + " was removed sucsessfully" );
        		this.updateOptions();
        	}       		
 	}
 	
 	public void updateOptions() {
-		DefaultComboBoxModel<String> model = new DefaultComboBoxModel<>( ExchangeRate.getCurrencies() );
+		DefaultComboBoxModel<String> model = new DefaultComboBoxModel<>( DataBase.getCurrencies() );
 		currencyOptions.setModel( model );
 		currencyOptions2.setModel( model );
 		this.paint(getGraphics());
