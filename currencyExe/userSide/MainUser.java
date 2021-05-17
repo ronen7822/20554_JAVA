@@ -12,9 +12,10 @@ public class MainUser extends WindowAdapter {
 		new  MainUser();
 	} 
 		 
-	public MainUser() {
+	public MainUser() { 
 		//open the data base
 		DataBase.establishConnection();  
+	
 	
 		JFrame frame = new JFrame (); // straight forward , building the main frame
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -28,6 +29,7 @@ public class MainUser extends WindowAdapter {
 	
 	// close the data base
 	public void windowClosing(WindowEvent e) {  
+		DataBase.unlockAllUsers();
 		DataBase.closeConnection();
 	} 
 }

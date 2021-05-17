@@ -13,7 +13,7 @@ public class MainDataBase extends WindowAdapter {
 		
 	public MainDataBase() {
 		//open the data base
-		DataBase.establishConnection();
+		DataBase.establishConnection(); 
 	
 		JFrame frame = new JFrame (); // straight forward , building the main frame
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);

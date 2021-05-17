@@ -74,10 +74,10 @@ public class SignIn extends JPanel implements  ActionListener{
 		else if (e.getSource() == signIn) {
 					
 			String idText = id.getText();
-			//String passwordText =  password.getText();
+			String passwordText =  password.getText();
 			int idNum = 0;
 			
-		    try {
+		    try { // try to convert the id to integer
 			      idNum = Integer.parseInt(idText);
 		    }
 			catch (NumberFormatException nfe) {
@@ -85,16 +85,28 @@ public class SignIn extends JPanel implements  ActionListener{
 			   	return;
 		    }
 			
-			if (! DataBase.userExsit(idText) ) {
+			if (! DataBase.userExsit(idText) ) { // check if the id is in the data base
 				response.setText("no such user exsit, please sign up");
 				return;
 			}
 			
-			else if (! DataBase.correctPassword( idNum, password.getText() ) ) {
+			else if (! DataBase.correctPassword( idNum, passwordText ) ) { // check if we enter the correct password
 				response.setText("incorrect password");
 			}
 			
-			else {
+			else { // the id and password are matching
+				
+				if (DataBase.userIsLogged(idNum, passwordText)) {
+					response.setText("you already logged in");
+					return;
+				}
+				
+				// only one user can be logged in to the same account
+				synchronized(this){
+					// mutex
+					DataBase.lockUser(idNum, passwordText);
+					new User(idNum, passwordText);				
+				}
 				response.setText("logging in");
 			}
 		}

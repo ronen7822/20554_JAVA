@@ -6,21 +6,22 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 
-// an api to use the data base
+// an API to use the data base
 public class DataBase {
 	
-	private static String url = "jdbc:mysql://localhost:3306/currency";
-	private static String userName = "root";
+	private static final String url = "jdbc:mysql://localhost:3306/currency";
+	private static final String userName = "root";
 	private static String password = "W2e3r4t5!";
 	private static Connection con;
 	private static Statement statement;
+	private static final String ENCRYPTION_KEY = "128cu3y1n~?" ;
 	
 	
 	// //establish connection to the data base
 	public static void establishConnection ()  {
 
 		try {
-			con = DriverManager.getConnection(url,userName,password);
+			con = DriverManager.getConnection(url, userName, password);
 			statement = con.createStatement();
 		}
 		catch(SQLException e) {
@@ -28,6 +29,7 @@ public class DataBase {
 			e.printStackTrace();
 		}
 	}
+	
 	
 	// close connection with data base
 	public static void closeConnection() {
@@ -39,6 +41,7 @@ public class DataBase {
 			e.printStackTrace();
 		}
 	}
+	
 	
 	// return the conversion of currencyFrom to currencyTo multiplied by the sum
 	public static double rate (double sum, String currencyFrom, String currencyTo) { 
@@ -64,15 +67,18 @@ public class DataBase {
 		return 0;			
 	}
 	
+	
 	// adds new currency to the data base relative to the shekel rate
 	public static void addCurrency(String currency, double rate) {
 		updateQuery ( "INSERT INTO ExchangeRare VALUES (" +'"'+ currency +'"'+ " , "+ rate +")" ) ;
 	}
 	
+	
 	// remove currency from the data base
 	public static void removeCurrency(String currency) {
 		updateQuery ( "DELETE FROM ExchangeRare   WHERE currency_name = '" +currency+ "' ;" ) ;
 	}
+	
 	
 	// return whether the currency is already in the data base
 	public static boolean currencyExistInTable(String key) {		
@@ -87,6 +93,7 @@ public class DataBase {
 		
 		return false;
 	}
+	
 	
 	// return all Currencies in the data base
 	public static String[] getCurrencies() {
@@ -115,6 +122,7 @@ public class DataBase {
 		return null;
 	}
 	
+	
 	// return true if the user id is already in the data base
 	public static boolean userExsit(String key) {
 		try {
@@ -129,27 +137,59 @@ public class DataBase {
 		return false;
 	}
 	  
+	
 	// adding the user to the data base
 	public static void addUser(int id, String password, String name) {
 		
-		// encrypt the password in the data base!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+		// encrypt the password to store in the data base
+		String encryptedPassword = Encrypting.encrypt(password, ENCRYPTION_KEY);
+		System.out.println("encryptedPassword to the data base: "+encryptedPassword);
+		
 		updateQuery ( "INSERT INTO users VALUES (" + id +" , '"+ name +"' , 'ILS' , 0) ;" );
-		updateQuery ( "INSERT INTO passwords VALUES (" + id +" , '"+ password +"' ) ;" );		
+		updateQuery ( "INSERT INTO passwords VALUES (" + id +" , '"+ encryptedPassword +"' , False ) ;" );		
 	}
+	
+	
+	// add doc 
+	public static void addCurrencyToUser (int id, double sum, String currency) {
+		
+		try {
+			String query =  " SELECT sum  FROM users  WHERE  currency = '" +currency+ "' AND person_id = " + id + " ;" ;
+			ResultSet result = statement.executeQuery(query);
+		
+			// add doc
+			if (result.next()) {
+				double totalSum = result.getDouble(1) + sum;
+				// update the data base
+				updateQuery ( " UPDATE  users SET sum = " + totalSum + "  WHERE  currency = '" +currency+ "' And person_id = " + id + ";" ) ;
+			}
+			else {
+				updateQuery ( "INSERT INTO users VALUES (" + id +" , 'default_name' , '" + currency + "'  , " + sum + ") ;" );
+			}
+		
+		}
+		catch(SQLException e) {
+			e.printStackTrace();
+		}
+	}
+	
 	
 	// return true if the password matches the password in the data base
 	public static boolean correctPassword (int id, String password ) {
 		
 		try {
 			String query =  " SELECT password  FROM  passwords  WHERE  id = " +id+ " ;" ;
-			System.out.println(query);
 			ResultSet result = statement.executeQuery(query);
+			
 			// if there is no result for the query
 			if ( result.next() == false)
 				return false ;
 			
+			// decrypt the password from the data base
+			String encryptedPassword =  result.getString(1);
+			String decryptedPassword  = Encrypting.decrypt(encryptedPassword, ENCRYPTION_KEY);
 			// if the passwords are equal return true, false otherwise
-			if(result.getString(1).equals(password))
+			if(decryptedPassword.equals(password))
 				 return true;
 			return false;
 		}
@@ -161,16 +201,75 @@ public class DataBase {
 	}
 	
 	
-	
-	// update the data base with the given query
-	private static void updateQuery (String query) {
-
-		try {
-			statement.executeUpdate(query);
-		} catch (SQLException e) {
-			e.printStackTrace();
-		}
+	// lock other users from singing in
+	public static  void  lockUser(int idNum, String passwordText) {	
+		
+		password = Encrypting.encrypt(passwordText, ENCRYPTION_KEY);
+		updateQuery ( " UPDATE passwords SET loged_in = True    WHERE  password = '" +password+ "' And id = " + idNum + ";" ) ;
 	}
 	
 	
+	// unlock the user 
+	public static  void  unlockUser(int idNum, String passwordText) {	
+		password = Encrypting.encrypt(passwordText, ENCRYPTION_KEY);
+		updateQuery ( " UPDATE passwords SET loged_in = False    WHERE  password = '" +password+ "' And id = " + idNum + ";" ) ;
+	}
+	
+	
+	// unlock all users in the data base
+	public static void unlockAllUsers() {
+		updateQuery ( " UPDATE passwords SET loged_in = False ;" ) ;
+	}
+	
+	
+	// check whether the user is already logged in
+	public static boolean userIsLogged (int idNum, String passwordText) {
+		
+		password = Encrypting.encrypt(passwordText, ENCRYPTION_KEY);
+		try {
+			String query =  " SELECT loged_in  FROM passwords  WHERE  password = '" +password+ "' And id = " + idNum + ";" ;
+			System.out.println("query: "+ query);
+			ResultSet result = statement.executeQuery(query);
+			result.next() ;
+			return result.getBoolean(1);
+			
+		}
+		catch(SQLException e) {
+			e.printStackTrace();
+		}
+		
+		return false;
+	}
+	
+	
+	// returns the total Net worth of the user from the data base
+	public static double getTotalValue(int idNum) {
+			 
+		try {
+			String query =   " SELECT SUM(sum * currency_rate) AS TotalItemsOrdered"
+					+ "  from users, ExchangeRare   where person_id = " + idNum  + " and currency = currency_name; " ;
+			System.out.println("query: "+ query);
+			ResultSet result = statement.executeQuery(query);
+			result.next() ;
+			return result.getDouble(1);
+				
+		}
+		catch(SQLException e) {
+			e.printStackTrace();
+		}
+		return 0;
+	}
+	
+	
+	
+	// update the data base with the given query
+	private static void updateQuery (String query) {
+		try {
+			statement.executeUpdate(query);
+		} 
+		catch (SQLException e) {
+			e.printStackTrace();
+		}
+	}
+		
 }

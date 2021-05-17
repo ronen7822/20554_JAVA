@@ -73,7 +73,7 @@ public class DrawData extends JPanel implements  ActionListener {
        			// try to convert the text into double if fails prints error to the user
        			Double ratio =  Double.parseDouble(ratioText);
        			// if the new currency is not in the data base
-           		if (! DataBase.currencyExistInTable(newCurrency)) {
+           		if (! DataBase.currencyExistInTable(newCurrency)) { 
            			// the ratio relative to the shekel
            			ratio = ratio * DataBase.rate(1, (String) currencyOptions.getSelectedItem(), "ILS");
            		
