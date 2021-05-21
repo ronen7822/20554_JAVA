@@ -17,6 +17,8 @@ import currencyExe.DataBase;
 
 public class SignIn extends JPanel implements  ActionListener{
 	
+	private  static final int MAX_ATTEMPTS  = 3;
+	private  static final int MINUTES_WAITING = 3;
 	private static final long serialVersionUID = 1L;
 	private JButton signIn, signUp ;
 	private JTextField id, password;
@@ -62,7 +64,7 @@ public class SignIn extends JPanel implements  ActionListener{
 	
 	public void paintComponent (Graphics g) {
 		super.paintComponent(g);
-}
+	}
 			    
 	// one of the buttons was clicked
 	public void actionPerformed (ActionEvent e) {	
@@ -91,35 +93,37 @@ public class SignIn extends JPanel implements  ActionListener{
 			}
 			
 			else if (! DataBase.correctPassword( idNum, passwordText ) ) { // check if we enter the correct password
+				DataBase.incrementTries( idNum );
 				response.setText("incorrect password");
 			}
 			
 			else { // the id and password are matching
 				
-				if (DataBase.userIsLogged(idNum, passwordText)) {
+				int numOfTries = DataBase.getTires(idNum);
+				// if the user tried to log in to many times and not enough time has passed
+				if (numOfTries > MAX_ATTEMPTS && DataBase.minutesPassed(idNum) < MINUTES_WAITING ) {
+					response.setText("you tired to sign in to many times please wait a few minutes");
+					return;
+				}
+				
+				// check  if the user is already logged, only one user can be logged in to the same account
+				if (DataBase.userIsLogged(idNum)) {
 					response.setText("you already logged in");
 					return;
 				}
 				
-				// only one user can be logged in to the same account
+				// critical section
 				synchronized(this){
 					// mutex
-					DataBase.lockUser(idNum, passwordText);
-					new User(idNum, passwordText);				
+					DataBase.lockUser(idNum);
+					new User(idNum);				
 				}
-				response.setText("logging in");
+				response.setText("logging in"); 
 			}
 		}
 
     }
 
 
-
-	
-
 }
-	
-
-	
-
-
+		

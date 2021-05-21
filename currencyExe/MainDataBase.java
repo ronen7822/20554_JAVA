@@ -11,7 +11,7 @@ public class MainDataBase extends WindowAdapter {
 		new MainDataBase();
 	}
 		
-	public MainDataBase() {
+	public MainDataBase() { 
 		//open the data base
 		DataBase.establishConnection(); 
 	

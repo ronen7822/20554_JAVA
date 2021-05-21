@@ -9,11 +9,13 @@ import java.util.Base64;
 import javax.crypto.Cipher;
 import javax.crypto.spec.SecretKeySpec;
  
+// encrypt data to store in the data base
 public class Encrypting {
  
     private static SecretKeySpec secretKey;
     private static byte[] key;
  
+   
     private static void setKey(String myKey) 
     {
         MessageDigest sha = null;
@@ -30,8 +32,10 @@ public class Encrypting {
         catch (UnsupportedEncodingException e) {
             e.printStackTrace();
         }
-    }
- 
+    } 
+    
+    
+    //  encrypts given string
     public static String encrypt(String strToEncrypt, String secret) 
     {
         try
@@ -47,7 +51,9 @@ public class Encrypting {
         }
         return null;
     }
- 
+    
+    
+    //  decrypts given string
     public static String decrypt(String strToDecrypt, String secret) 
     {
         try

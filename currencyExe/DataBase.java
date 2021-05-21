@@ -9,7 +9,7 @@ import java.sql.Statement;
 // an API to use the data base
 public class DataBase {
 	
-	private static final String url = "jdbc:mysql://localhost:3306/currency";
+	private static final String url = "jdbc:mysql://127.0.0.1:3306/currency";
 	private static final String userName = "root";
 	private static String password = "W2e3r4t5!";
 	private static Connection con;
@@ -143,10 +143,9 @@ public class DataBase {
 		
 		// encrypt the password to store in the data base
 		String encryptedPassword = Encrypting.encrypt(password, ENCRYPTION_KEY);
-		System.out.println("encryptedPassword to the data base: "+encryptedPassword);
-		
+	
 		updateQuery ( "INSERT INTO users VALUES (" + id +" , '"+ name +"' , 'ILS' , 0) ;" );
-		updateQuery ( "INSERT INTO passwords VALUES (" + id +" , '"+ encryptedPassword +"' , False ) ;" );		
+		updateQuery ( "INSERT INTO passwords VALUES (" + id +" , '"+ encryptedPassword +"' , False, 0, CURRENT_TIMESTAMP() ) ;" );		
 	}
 	
 	
@@ -186,8 +185,9 @@ public class DataBase {
 				return false ;
 			
 			// decrypt the password from the data base
-			String encryptedPassword =  result.getString(1);
+			String encryptedPassword =  result.getString(1);			
 			String decryptedPassword  = Encrypting.decrypt(encryptedPassword, ENCRYPTION_KEY);
+			
 			// if the passwords are equal return true, false otherwise
 			if(decryptedPassword.equals(password))
 				 return true;
@@ -202,17 +202,14 @@ public class DataBase {
 	
 	
 	// lock other users from singing in
-	public static  void  lockUser(int idNum, String passwordText) {	
-		
-		password = Encrypting.encrypt(passwordText, ENCRYPTION_KEY);
-		updateQuery ( " UPDATE passwords SET loged_in = True    WHERE  password = '" +password+ "' And id = " + idNum + ";" ) ;
+	public static  void  lockUser(int idNum) {	
+		updateQuery ( " UPDATE passwords SET loged_in = True , num_of_tries = 0   WHERE id = " + idNum + ";" ) ;
 	}
 	
 	
 	// unlock the user 
-	public static  void  unlockUser(int idNum, String passwordText) {	
-		password = Encrypting.encrypt(passwordText, ENCRYPTION_KEY);
-		updateQuery ( " UPDATE passwords SET loged_in = False    WHERE  password = '" +password+ "' And id = " + idNum + ";" ) ;
+	public static  void  unlockUser(int idNum) {	
+		updateQuery ( " UPDATE passwords SET loged_in = False    WHERE  id = " + idNum + ";" ) ;
 	}
 	
 	
@@ -223,12 +220,10 @@ public class DataBase {
 	
 	
 	// check whether the user is already logged in
-	public static boolean userIsLogged (int idNum, String passwordText) {
+	public static boolean userIsLogged (int idNum) {
 		
-		password = Encrypting.encrypt(passwordText, ENCRYPTION_KEY);
 		try {
-			String query =  " SELECT loged_in  FROM passwords  WHERE  password = '" +password+ "' And id = " + idNum + ";" ;
-			System.out.println("query: "+ query);
+			String query =  " SELECT loged_in  FROM passwords  WHERE  id = " + idNum + ";" ;
 			ResultSet result = statement.executeQuery(query);
 			result.next() ;
 			return result.getBoolean(1);
@@ -248,7 +243,6 @@ public class DataBase {
 		try {
 			String query =   " SELECT SUM(sum * currency_rate) AS TotalItemsOrdered"
 					+ "  from users, ExchangeRare   where person_id = " + idNum  + " and currency = currency_name; " ;
-			System.out.println("query: "+ query);
 			ResultSet result = statement.executeQuery(query);
 			result.next() ;
 			return result.getDouble(1);
@@ -260,12 +254,52 @@ public class DataBase {
 		return 0;
 	}
 	
+	// return the number of tries that the user tried to log in unsuccessfully
+	public static int getTires (int idNum) {
+		
+		try {
+			String query =  " SELECT num_of_tries  FROM passwords  WHERE  id = " + idNum + ";" ;
+			ResultSet result = statement.executeQuery(query);
+			result.next() ;
+			return result.getInt(1);
+			
+		}
+		catch(SQLException e) {
+			e.printStackTrace();
+		}
+		return 0;
+	}
+	
+	
+	// return the time difference from the last unsuccessful try
+	public static int minutesPassed (int idNum) {
+		try {
+			String query =  " SELECT  TIMESTAMPDIFF( minute, last_try, CURRENT_TIMESTAMP() )   FROM passwords  WHERE  id = " + idNum + ";" ;
+			ResultSet result = statement.executeQuery(query);
+			result.next() ;
+			return result.getInt(1);
+			
+		}
+		catch(SQLException e) {
+			e.printStackTrace();
+		}
+		return 0;
+		
+	}
+	
+	// increment the number of tries
+	public  static void incrementTries(int idNum) {
+		
+		int tires  = 1 + getTires(idNum) ;
+		updateQuery ( " UPDATE passwords SET  last_try = CURRENT_TIMESTAMP() , num_of_tries = '" + tires +"'   WHERE  id = " + idNum + ";" ) ;
+				
+	}
 	
 	
 	// update the data base with the given query
 	private static void updateQuery (String query) {
 		try {
-			statement.executeUpdate(query);
+			statement.executeUpdate(query); 
 		} 
 		catch (SQLException e) {
 			e.printStackTrace();

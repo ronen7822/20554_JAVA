@@ -23,7 +23,7 @@ public class DrawData extends JPanel implements  ActionListener {
 
 	public DrawData() {	
 		add = new JButton("add");
-		remove = new JButton("remove");
+		remove = new JButton("remove"); 
 		from = new JTextField("type the currency you want to add",19); 
 		ratio = new JTextField("type the ratio",8); 
 		response = new JLabel();
@@ -94,7 +94,7 @@ public class DrawData extends JPanel implements  ActionListener {
        		String currencyToRemove = (String)currencyOptions.getSelectedItem();
        		 
        		if (currencyToRemove.equals("ILS")) {    			
-       			response.setText("Can not remove ILS" );
+       			response.setText("Can not remove ILS" ); 
        			return;
        		}
        		// remove the currency from the the data base

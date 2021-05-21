@@ -29,7 +29,7 @@ public class UserTransaction extends JPanel implements ActionListener {
 		
 		add = new JButton("add");
 		getTotalValue = new JButton("show total value");
-		sum = new JTextField("type the sum",8); 
+		sum = new JTextField("type the sum to add",8); 
 		response = new JLabel();
 
 		currencyOptions= new JComboBox<String>(DataBase.getCurrencies());
@@ -38,7 +38,7 @@ public class UserTransaction extends JPanel implements ActionListener {
 		controls.add(currencyOptions);		
 		controls.add(sum);
 		controls.add(add);
-		controls.add(getTotalValue);
+		controls.add(getTotalValue); 
 
 		
 		JPanel answer = new JPanel(); // the panel to the text field 

@@ -9,13 +9,11 @@ import currencyExe.DataBase;
  
 public class User extends WindowAdapter {
 	
-	private final String passwordText;
 	private final int idNum;
 	
-	public User(int idNum, String passwordText) {
+	public User(int idNum) {
 		
 		this.idNum = idNum;
-		this.passwordText = passwordText;
 		
 		JFrame frame = new JFrame ("User Transaction"); 
 		frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
@@ -29,6 +27,6 @@ public class User extends WindowAdapter {
 	
 	// unlock the user in the data base
 	public void windowClosing(WindowEvent e) {  
-		DataBase.unlockUser(idNum, passwordText);
+		DataBase.unlockUser(idNum);
 	} 
 }

@@ -13,7 +13,7 @@ public class MainUser extends WindowAdapter {
 	} 
 		 
 	public MainUser() { 
-		//open the data base
+		//open the data base 
 		DataBase.establishConnection();  
 	
 	
